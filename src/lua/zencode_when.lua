@@ -1,6 +1,6 @@
 -- This file is part of Zenroom (https://zenroom.dyne.org)
 --
--- Copyright (C) 2018-2019 Dyne.org foundation
+-- Copyright (C) 2018-2020 Dyne.org foundation
 -- designed, written and maintained by Denis Roio <jaromil@dyne.org>
 --
 -- This program is free software: you can redistribute it and/or modify
@@ -19,31 +19,30 @@
 
 --- WHEN
 
-When("I append '' to ''", function(content, dest)
-		ZEN.assert(not ZEN.schemas[dest], "When denied, schema collision detected: "..dest)
-		ACK[dest] = ACK[dest] .. ZEN:import(content)
+When("I append string '' to ''", function(content, dest)
+		ZEN.assert(not ZEN.schemas[dest], "Append denied, schema collision detected: "..dest)
+		ACK[dest] = ACK[dest] .. O.from_string(content)
 end)
-When("I append '' to '' formatted as ''", function(content, dest, format)
-		ZEN.assert(not ZEN.schemas[dest], "When denied, schema collision detected: "..dest)
-		ACK[dest] = ACK[dest] .. ZEN:import(content, input_encoding(format).fun) -- add prefix
+When("I append '' to '' as ''", function(content, dest, format)
+		ZEN.assert(not ZEN.schemas[dest], "Append denied, schema collision detected: "..dest)
+		ACK[dest] = ACK[dest] .. ZEN.decode(content, input_encoding(format))
 end)
 
--- hardcoded import encoding from_string
-When("I write '' in ''", function(content, dest)
+-- simplified exception for I write: import encoding from_string ...
+When("I write string '' in ''", function(content, dest)
 		ZEN.assert(not ZEN.schemas[dest], "When denied, schema collision detected: "..dest)
-		ACK[dest] = ZEN:import(content, O.from_string)
+		ACK[dest] = O.from_string(content)
 end)
-When("I set '' to ''", function(dest, content)
+-- ... and from a number
+When("I write number '' in ''", function(content, dest)
 		ZEN.assert(not ZEN.schemas[dest], "When denied, schema collision detected: "..dest)
-		ACK[dest] = ZEN:import(content, O.from_string)
+		-- TODO: detect number base 10
+		ACK[dest] = tonumber(content, 10)
 end)
-When("I set '' to '' formatted as ''", function(dest, content, format)
-		ZEN.assert(not ZEN.schemas[dest], "When denied, schema collision detected: "..dest)
-		ACK[dest] = ZEN:import(content, input_encoding(format).fun)
-end)
+
 When("I set '' to '' as ''", function(dest, content, format)
 		ZEN.assert(not ZEN.schemas[dest], "When denied, schema collision detected: "..dest)
-		ACK[dest] = ZEN:import(content, input_encoding(format).fun)
+		ACK[dest] = ZEN.decode(content, input_encoding(format))
 end)
 When("I create a random ''", function(s)
 		ZEN.assert(not ZEN.schemas[s], "When denied, schema collision detected: "..s)
@@ -59,6 +58,7 @@ end)
 
 -- hashing single strings
 When("I create the hash of ''", function(s)
+		-- TODO: hash an array
 		local src = ACK[s]
 		ZEN.assert(src, "Object not found: "..s)
 		ACK.hash = sha256(src)

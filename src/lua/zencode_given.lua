@@ -16,6 +16,8 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+-- TODO: use strict table
+-- https://stevedonovan.github.io/Penlight/api/libraries/pl.strict.html
 
 -- GIVEN
 local function gc()
@@ -23,36 +25,32 @@ local function gc()
    collectgarbage'collect'
 end
 
-Given("nothing", function() ZEN.assert(not DATA and not KEYS, "Unused data passed as input") end)
-Given("all data", function()
-		 ZEN.assert(CONF.input.encoding.fun, "No input encoding rule found")
-		 local fun = CONF.input.encoding.fun
-		 ZEN:assert(luatype(fun) == 'function', "Conversion is not a valid function")
-		 local function conv(intab)
-			for k, v in next,intab,nil do
-			   if luatype(v) == "table" then
-				  ACK[k] = conv(v) -- was just table.copy
-			   else
-				  ACK[k] = fun(v)
-			   end
-			end
-		 end
-		 conv(IN)
-end)
--- TODO: Given all valid data
+Given("nothing", function() ZEN.assert(not DATA and not KEYS, "Undesired data passed as input") end)
+
+-- maybe TODO: Given all valid data
 -- convert and import data only when is known by schema and passes validation
 -- ignore all other data structures that are not known by schema or don't pass validation
 
-Given("I introduce myself as ''", function(name) ZEN:Iam(name) end)
 Given("I am known as ''", function(name) ZEN:Iam(name) end)
 Given("I am ''", function(name) ZEN:Iam(name) end)
 
+-- TODO: I have a '' as ''
 Given("I have a ''", function(name)
 		 ZEN:pick(name)
 		 TMP.valid = true
 		 ZEN:ack(name)
 		 gc()
 end)
+
+Given("I have a '' as ''", function(name, enc)
+		 local encoder = input_encoding(enc)
+		 ZEN.assert(encoder, "Invalid input encoding for '"..name.."': "..enc)
+		 ZEN:pick(name, nil, encoder)
+		 TMP.valid = true
+		 ZEN:ack(name)
+		 gc()
+end)
+
 Given("I have my ''", function(name)
 		 ZEN.assert(WHO, "No identity specified, use: Given I am ...")
 		 ZEN:pickin(WHO, name)

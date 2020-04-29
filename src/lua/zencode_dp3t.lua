@@ -18,47 +18,52 @@
 
 -- Decentralized Privacy-Preserving Proximity Tracing scenarion in Zencode
 
-BROADCAST_KEY = "Decentralized Privacy-Preserving Proximity Tracing"
 SHA256 = HASH.new('sha256')
 
-ZEN.add_schema({
-	  secret_day_key = function(obj)
-		 ZEN.assert(#obj == 32, "Secret day key has wrong size (not 32 bytes / 256 bits)")
-		 return obj
-	  end
-	  -- TODO:
-	  -- list of infected (array of 32 byte random hashes)
-	  -- ephemeral ids (array of 16 byte AES-GCM checksums)
-})
+-- ZEN.add_schema({
+-- 	  -- secret_day_key = function(obj)
+-- 	  -- 	 ZEN.assert(#obj == 32, "Secret day key has wrong size (not 32 bytes / 256 bits)")
+-- 	  -- 	 return obj
+-- 	  -- end
+-- 	  -- TODO:
+-- 	  -- list of infected (array of 32 byte random hashes)
+-- 	  -- ephemeral ids (array of 16 byte AES-GCM checksums)
+-- })
 
 When("I renew the secret day key to a new day", function()
 		ZEN.assert(ACK.secret_day_key, "Secret day key not found")
 		local sk = SHA256:process(ACK.secret_day_key)
-		ZEN.assert(sk, "HMAC Error renewing secret day key")
+		ZEN.assert(sk, "Error renewing secret day key (SHA256)")
 		ACK.secret_day_key = sk
 end)
 
-When("I create the ephemeral ids for each moment of the day", function()
+When("I create the ephemeral ids for today", function()
 		ZEN.assert(ACK.secret_day_key, "Secret day key not found")
-		ZEN.assert(type(ACK.moments) == 'number', "Number of moments not found")
+		ZEN.assert(ACK.broadcast_key, "Broadcast key not found")
+		ZEN.assert(type(ACK.epoch) == 'number', "Epoch length (minutes) not found")
+		local PRF = SHA256:hmac(ACK.secret_day_key, ACK.broadcast_key)
+		local epd = (24*60)/ACK.epoch -- num epochs per day
+		local zero = OCTET.new(epd*16):zero() -- 0 byte buffer
 		ACK.ephemeral_ids = { }
-		for i = 0,ACK.moments,1 do
-		   local PRF = SHA256:hmac(ACK.secret_day_key, BROADCAST_KEY)
-		   local PRG = AES.ctr(PRF, O.from_number(0), O.from_number(i))
-		   -- BROADCAST_KEY is the authenticated header
-		   table.insert(ACK.ephemeral_ids, PRG) -- use the 16byte checksums
+		for i = 0,epd,1 do
+		   local PRG = AES.ctr(PRF, zero, O.from_number(i))
+		   local l,r = OCTET.chop(PRG,16)
+		   table.insert(ACK.ephemeral_ids, l)
 		end
 end)
 
 When("I create the proximity tracing of infected ids", function()
-		ZEN.assert(type(ACK.moments) == 'number', "Number of moments not found")
+		ZEN.assert(type(ACK.epoch) == 'number', "Number of moments not found")
 		ZEN.assert(type(ACK.list_of_infected) == 'table', "List of infected not found")
 		ZEN.assert(type(ACK.ephemeral_ids) == 'table', "List of ephemeral ids not found")
+		ZEN.assert(ACK.broadcast_key, "Broadcast key not found")
 		ACK.proximity_tracing = { }
+		local epd = (24*60)/ACK.epoch -- num epochs per day
+		local zero = OCTET.new(epd*16):zero() -- 0 byte buffer
 		for n,sk in ipairs(ACK.list_of_infected) do
-		   for i = 0,ACK.moments,1 do
-			  local PRF = SHA256:hmac(sk, BROADCAST_KEY)
-			  local PRG = AES.ctr(PRF, O.from_number(0), O.from_number(i))
+		   local PRF = SHA256:hmac(sk, ACK.broadcast_key)
+		   for i = 0,epd,1 do
+			  local PRG = OCTET.chop( AES.ctr(PRF, zero, O.from_number(i)), 16)
 			  for nn,eph in next, ACK.ephemeral_ids, nil do
 				 if eph == PRG then
 					table.insert(ACK.proximity_tracing, sk)

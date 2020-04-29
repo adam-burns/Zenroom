@@ -1,14 +1,16 @@
+
+
 # Smart contracts in human language
 
-Zenroom is software inspired by the [language-theoretical security](http://langsec.org) research and it allows to express cryptographic operations in a readable domain-specific language called **Zencode**.
+Zenroom's development is heavily inspired by the [language-theoretical security](http://langsec.org) research and the [BDD Language](https://en.wikipedia.org/wiki/Behavior-driven_development). 
+
+Zenroom can execute smart contracts written in the  domain-specific language **Zencode**, which reads in a [natural English-like fashion](https://decodeproject.eu/blog/smart-contracts-english-speaker), and allows to perform cryptographic operations as long as more traditional data manipulation.
 
 For the theoretical background see the [Zencode Whitepaper](https://files.dyne.org/zenroom/Zencode_Whitepaper.pdf).
 
-For an introduction see this blog post: [Smart contracts for the English speaker](https://decodeproject.eu/blog/smart-contracts-english-speaker).
-
 Here we go with the <span class="big">**tutorial to learn the Zencode language!**</span>
 
-# Syntax and Memory model
+# Introduction
 
 Zencode contracts operate in 3 phases:
 
@@ -33,7 +35,7 @@ rule check version 1.0.0
 
 ---
 
-# Symmetric encryption
+# Symmetric cryptography
 
 This is a simple technique to hide a secret using a common password known to all participants.
 
@@ -52,12 +54,7 @@ These 3 arguments can be written or imported, but must given before using the `I
 
 The output is returned in `secret message` and it looks like:
 
-```json
-{"secret_message":{"iv":"u64:-tU2gbox9kATCeC2k_zkhYM-PBA3IzvN7HtfyVXdzB4",
-	"header":"u64:dGhpc19pc19mb3JfQm9i",
-	"text":"u64:cw4M3FBO3zaPRAB26d6y8SMPGgAo_0AmJUrhg5dmKwoEB7BWLAAD_A2h",
-	"checksum":"u64:UugLrIuxRX46BETc1-XkrA"}}
-```
+[](../_media/examples/zencode_simple/cipher_message.json ':include :type=code json')
 
 To decode make sure to have that secret password and that a valid `secret message` is given, then use:
 
@@ -82,9 +79,8 @@ dangerous part, since it could be stolen.
 We mitigate this risk using **public-key cryptography**, also known as
 **a-symmetric encryption**, explained below.
 
----
 
-# Asymmetric encryption
+# Asymmetric cryptography
 
 We use [asymmetric encryption (or public key
 cryptography)](https://en.wikipedia.org/wiki/Public-key_cryptography)
@@ -102,18 +98,11 @@ In this phase each participant will create his/her own keypair, store it and com
 
 The statement to generate a keypair (public and private keys) is simple:
 
-[](../_media/examples/zencode_simple/AES01.zen ':include :type=code gherkin')
+[](../_media/examples/zencode_simple/alice_keygen.zen ':include :type=code gherkin')
 
 It will produce something like this:
 
-```json
-"Alice": {
-   "keypair": {
-      "private_key": "u64:F_NaS3Y6Xw6BW...",
-      "public_key": "u64:BLG0OGDwzP_gY41TZgGpUB4lTYCgpx9BJVScxSQAfwqEi..."
-   }
-}
-```
+[](../_media/examples/zencode_simple/alice_keypair.json ':include :type=code json')
 
 Where the public key is usually a longer octet and actually an [Elliptic Curve Point](/lua/modules/ECP.html) coordinate.
 
@@ -140,38 +129,10 @@ After both Alice and Bob have their own keypairs and they both know
 each other public key we can move forward to do asymmetric encryption
 and signatures.
 
-[](../_media/examples/zencode_simple/AES01.zen ':include :type=code gherkin')
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
+[](../_media/examples/zencode_simple/alice_keypub.zen ':include :type=code gherkin')
 
-```json
-"Alice": {
-   "keypair": {
-      "private_key": "u64:F_NaS3Y6Xw6BW...",
-      "public_key": "u64:BLG0OGDwzP_gY41TZgGpUB4lTYCgpx9BJVScxSQAfwqEi..."
-   }
-}
-```
 
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-
-[](../_media/examples/zencode_simple/AES02.zen ':include :type=code gherkin')
-
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-
-```json
-"Alice": {
-   "public_key": "u64:BLG0OGDwzP_gY41TZgGpUB4lTYCgpx9BJVScxSQAfwqEi..."
-}
-```
+[](../_media/examples/zencode_simple/alice_pub.json ':include :type=code json')
 
 The advantage of using Zencode here is the use of the `valid` keyword which effectively parses the `public key` object and verifies it as valid, in this case as being a valid point on the elliptic curve in use. This greatly reduces the possibility of common mistakes.
 
@@ -189,20 +150,7 @@ Before getting to the encryption 2 other objects must be given:
 
 So with an input separated between DATA and KEYS or grouped together in an array like:
 
-```json
-[
-  {"Bob": {"public_key":"u64:BGF59uMP0DkHoTjMT..."} },
-  {"Alice": { "keypair": {
-      "private_key": "u64:F_NaS3Y6Xw6BW...",
-      "public_key": "u64:BLG0OGDwzP_gY41TZgGpUB4lTYCgpx9BJVScxSQAfwqEi..." } } }
-]
-```
-
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-<span class="mdi mdi-arrow-down"></span>
-
+[](../_media/examples/zencode_simple/bob_keyring.json ':include :type=code json')
 
 [](../_media/examples/zencode_simple/AES05.zen ':include :type=code gherkin')
 
@@ -224,12 +172,15 @@ sequenceDiagram
 
 
 **1. Alice encrypts the message using Bob's public key**
+
 [](../_media/examples/zencode_simple/AES05.zen ':include :type=code gherkin')
 
 **2. Bob prepares a keyring with Alice's public key**
+
 [](../_media/examples/zencode_simple/AES06.zen ':include :type=code gherkin')
 
 **3. Bob decrypts the message using Alice's public key**
+
 [](../_media/examples/zencode_simple/AES07.zen ':include :type=code gherkin')
 
 In this basic example the session key for encryption is made combining
@@ -237,8 +188,8 @@ the private key of Alice and the public key of Bob (or
 vice versa).
 
 ```gherkin
-When I write 'my secret for you' in 'message'
-and I write 'an authenticated message' in 'header'
+	When I write 'my secret for you' in 'message'
+	and I write 'an authenticated message' in 'header'
 ```
 
 The decryption will always check that the header hasn't changed,
@@ -258,15 +209,15 @@ The one signing only needs his/her own keypair, so the key setup will
 be made by the lines:
 
 ```gherkin
-Given that I am known as 'Alice'
-and I have my valid 'keypair'
+	Given that I am known as 'Alice'
+	and I have my valid 'keypair'
 ```
 
 then assuming that the document to sign is in `draft`, Alice can
 proceed signing it with:
 
 ```gherkin
-and I create the signature of 'draft'
+	and I create the signature of 'draft'
 ```
 
 which will produce a new object `signature` to be printed along the
@@ -276,7 +227,7 @@ On the other side Bob will need Alice's public key to verify the
 signature with the line:
 
 ```gherkin
-When I verify the 'draft' is signed by 'Alice'
+	When I verify the 'draft' is signed by 'Alice'
 ```
 
 which will fail in case the signature is invalid or the document has
@@ -299,30 +250,54 @@ Here we continue assuming that the keyrings are already prepared with
 public/private keypairs and the public keypair of the correspondent.
 
 **1. Alice signs a message for Bob**
+
 [](../_media/examples/zencode_simple/DSA01.zen ':include :type=code gherkin')
 
 **1. Bob verifies the signed message from Alice**
+
 [](../_media/examples/zencode_simple/DSA02.zen ':include :type=code gherkin')
 
 In this example Alice uses her private key to sign and authenticate a
 message. Bob or anyone else can use Alice's public key to prove that
 the integrity of the message is kept intact and that she signed it.
 
----
+# Zero Knowledge Proof
 
-# Attribute Based Credentials
+In this chapter we'll look at some more advanced cryptography, namely the 'Attribute Based Credentials' and the 'Zero Knowledge Proof': this is powerful and complex feature
+implemented using the [Coconut crypto scheme](https://arxiv.org/pdf/1802.07344.pdf). 
 
-![Alice in Wonderland](../_media/images/alice_with_cards-sm.jpg)
+Zencode supports several features based on pairing elliptic curve
+arithmetics and in particular:
 
-Attribute Based Credentials are a powerful and complex feature
-implemented using the [Coconut crypto
-scheme](https://arxiv.org/pdf/1802.07344.pdf). This is the most
-complex functionality available in Zenroom and it will show how the
-Zencode language really simplifies it.
+- non-interactive zero knowledge proofs (also known as ZKP or ZK-Snarks)
+- threshold credentials with multiple decentralised issuers
+- homomorphic encryption for numeric counters
+
+These are all very useful features for architectures based on the
+decentralisation of trust, typical of **DLT and blockchain based
+systems, as well for off-line and non-interactive authentication**.
+
+The Zencode language leverages two main scenarios, more will be
+implemented in the future.
+
+1. Attribute Based Credentials (ABC) where issuer verification keys
+   represent specific credentials
+2. A Petition system based on ABC and homomorphic encryption
+
+Three more are in the work and they are:
+
+1. Anonymous proxy validation scheme
+2. Token thumbler to privately transfer numeric assets
+3. Private credential revocation
+
+
+## Attribute Based Credentials
+
+![Alice in Wonderland](../_media/images/alice_with_cards-sm.jpg) 
 
 Let's imagine 3 different subjects for our scenarios:
 
-1. **Mad Hatter** is a well known **issuer** in Wonderland
+1. **Mad Hatter** is a well known **credential issuer** in Wonderland
 2. **Wonderland** is an open space (a blockchain!) and all inhabitants can check the validity of **proofs**
 3. **Alice** just arrived: to create **proofs** she'll request a **credential** to the issuer **MadHatter**
 
@@ -515,14 +490,14 @@ print the results all together!
 
 ```gherkin
 Scenario coconut
-Given that I am known as 'Issuer'
-When I create the issuer keypair
-and I create the credential keypair
-and I create the credential request
-and I create the credential signature
-and I create the credentials
-Then print the 'credentials'
-and print the 'credential keypair'
+	Given that I am known as 'Issuer'
+	When I create the issuer keypair
+	and I create the credential keypair
+	and I create the credential request
+	and I create the credential signature
+	and I create the credentials
+	Then print the 'credentials'
+	and print the 'credential keypair'
 ```
 
 This will produce **credentials** that anyone can take and run. Just
@@ -532,125 +507,114 @@ maliciously keep the **credential keypair** and impersonate the
 
 
 
-## Try it on your system!
+# Proximity Tracing
 
-Impatient to give it a spin? run Zencode scripts locally to see what
-are the files produced!
+Following up [this popular post on how to make decentralized
+privacy-preserving proximity tracing using
+zencode](https://medium.com/@jaromil/decentralized-privacy-preserving-proximity-tracing-cryptography-made-easy-af0a6ae48640)
+this documentation will go through implementation details.
 
-Make sure that Zenroom is installed on your PC
-and then go to the...
+The Decentralized Privacy-Preserving Proximity Tracing (DP-3T)
+protocol is described in the [DP-3T
+Whitepaper](https://github.com/DP-3T/documents/).
 
-[Online Interactive Demo](/demo)
+If you are a mobile app developer or a tech-savvy person in general,
+someone that can read and experiment with a shell script or javascript
+or someone curious enough to know more how applied cryptography works,
+then read on and you’ll be surprised how easy this is.
 
-[Shell Script Examples](/pages/shell_scripts)
+![Processing and storing of observed ​Ephemeral IDs (artwork by Wouter Lueks)](https://github.com/DP-3T/documents/raw/master/graphics/decentralized_contact_tracing/whitepaper_figureAA_processing_storing_ephIDs.png)
 
----
+A software application implementing this scheme shall be capable of computing through 3 basic steps:
 
-# Zero Knowledge Proofs
+1. Setup the secret day key (SK)
+2. Create a list of Ephemeral IDs (EphIDs)
+3. Check the proximity to “infected” devices
 
-There is more to this of course: Zencode supports several features
-based on pairing elliptic curve arithmetics and in particular:
+The following sections will demonstrate how an application can do that
+by embedding the Zenroom VM and using the special “DP3T” Zencode
+scenario.
 
-- non-interactive zero knowledge proofs (also known as ZKP or ZK-Snarks)
-- threshold credentials with multiple decentralised issuers
-- homomorphic encryption for numeric counters
+## Setup the SK
 
-These are all very useful features for architectures based on the
-decentralisation of trust, typical of **DLT and blockchain based
-systems, as well for off-line and non-interactive authentication**.
+Execute the following Zencode:
 
-The Zencode language leverages two main scenarios, more will be
-implemented in the future.
+[](../_media/examples/zencode_dp3t/dp3t_keygen.zen ':include :type=code gherkin')
 
-1. Attribute Based Credentials (ABC) where issuer verification keys
-   represent specific credentials
-2. A Petition system based on ABC and homomorphic encryption
+This will output you a brand new “secret day key” (SK):
 
-Three more are in the work and they are:
+[](../_media/examples/zencode_dp3t/SK1.json ':include :type=code json')
 
-1. Anonymous proxy validation scheme
-2. Token thumbler to privately transfer numeric assets
-3. Private credential revocation
+If you have already created a new SK and want to renew, pass the
+previous SK as input to Zenroom (either DATA or KEYS buffer) and run
+this Zencode:
 
----
+[](../_media/examples/zencode_dp3t/dp3t_keyderiv.zen ':include :type=code gherkin')
 
-# Import, validate and transform data
+This will output a new SK in the same format but with different content:
 
-## Given
+[](../_media/examples/zencode_dp3t/SK2.json ':include :type=code json')
 
-### Self introduction
+## Create the EphIDs
 
-This affects **my** statements
+To generate a list of ephemeral IDs (EphIDs) for the day one should
+have a renewed secret day key and an `epoch` number: the minutes
+interval of `ephid` renewal during the day. Here we set `epoch` to
+`180` thus producing 9 ephids and segmenting the day in 8 moments:
+early morning, late morning, lunch, early afternoon, late afternoon,
+dinner, early evening, late evening.
 
-```gherkin
-   Given I introduce myself as ''
-   Given I am known as ''
-   Given I am ''
-   Given I have my ''
-   Given I have my valid ''
+The current secret day key (SK) needs to be passed as input to the
+following script as DATA or INPUT:
+
+[](../_media/examples/zencode_dp3t/dp3t_ephidgen.zen ':include :type=code gherkin')
+
+This will yield 9 EphIDs ready to use as output:
+
+[](../_media/examples/zencode_dp3t/EphID_2.json ':include :type=code json')
+
+This is a randomized array of EphIDs that the mobile application should broadcast at the different moments of the day.
+
+## Check the proximity
+
+Here we assume the mobile application will have received from an
+online server the list of “infected SKs” identifiers, for instance as
+a JSON file. This list will be very big (plausibly 20.000 entries) and
+is truncated here, it will consist of an array of `list of infected`
+secret day keys belonging to individuals willing to run the
+application. For example:
+
+```json
+{
+   "list_of_infected" : [
+      "b2bf0a3038f3810d2b3fbd4f300b3d8827cf5fb0078c3bd3dc65c48481162820",
+      "d843e0cec156f496e11f39f81e40708cf95341dad022a450924decd7e153354c",
+      "64c200f8db42a03f9757529f6415aa452639039f2c92301b640c17b3889b6ccc",
+      "595d59e1ddc733536e9943f29ad066904bb06802cfe8c216bdc9d67d0deb28f9",
+      "e28668b87d50147848385b5adfc010f7fce516e57115220be49214d415a0e451",
+      "3188ab1c837658bd906430d98b41eb3b6012c153282456abbaf622036f4996e9",
+  ...
+}
 ```
 
-Data provided as input (from **data** and **keys**) is all imported
-automatically from **JSON** or [CBOR](https://tools.ietf.org/html/rfc7049) binary formats.
+The mobile application will also have a list of EphIDs that were caught from the ether (broadcasted by other devices) and stored on the phone.
 
-Scenarios can add Schema for specific data validation mapped to **words** like: **signature**, **proof** or **secret**.
+[](../_media/examples/zencode_dp3t/EphID_infected.json ':include :type=code json')
 
+At this point the application will have to execute the following
+Zencode to calculate if it has been in the proximity of any COVID-19
+positive device:
 
-**Data input**
-```gherkin
-   Given I have a ''
-   Given I have a valid ''
-   Given I have a '' inside ''
-   Given I have a valid '' inside ''
-   Given I have a '' from ''
-   Given I have a valid '' from ''
-   Given the '' is valid
-```
+[](../_media/examples/zencode_dp3t/dp3t_check.zen ':include :type=code gherkin')
 
-or check emptiness:
+This code will take a while to run, approx 2 seconds on a i5 2.4Ghz
+CPU and 10 seconds on a phone, requiring approx 4MB of RAM to process
+the `list of infected` array and check them on the `ephemeral ids`
+collected. This script will then output an array of SKs that are
+present in the infection list and that were in the proximity.
 
-```gherkin
-   Given nothing
-```
+[](../_media/examples/zencode_dp3t/SK_proximity.json ':include :type=code json')
 
-all the list of valid `given` statements are:
-
-[](../_media/zencode_utterances.yaml ':include :fragment=given :type=code yaml')
-
-
-When **valid** is specified then extra checks are made on input value,
-mostly according to the **scenario**
-
-**Settings**
-```txt
-rule input encoding [ url64 | base64 | hex | bin ]
-rule input format [ json | cbor ]
-```
-
-## When
-
-Processing data is done in the when block. Also scenarios add statements to this block.
-
-Without extensions, these are the basic functions available
-
-[](../_media/zencode_utterances.yaml ':include :fragment=when :type=code yaml')
-
-with the `simple` extension the following statementa are valid
-
-[](../_media/zencode_utterances.yaml ':include :fragment=simple_when :type=code yaml')
-
-with the `coconut` extension the following statementa are valid
-
-[](../_media/zencode_utterances.yaml ':include :fragment=coconut_when :type=code yaml')
-
-## Then
-
-Output is all exported in JSON or CBOR
-
-[](../_media/zencode_utterances.yaml ':include :fragment=then :type=code yaml')
-
-Settings:
-```txt
-rule output encoding [ url64 | base64 | hex | bin ]
-rule output format [ json | cbor ]
-```
+As it is visible in this example the SK of a single device (SK) will
+be repeated in case it was in the proximity through different moments
+of the day.

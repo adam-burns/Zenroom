@@ -16,16 +16,32 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+-- limit output of string if too long
+function limit(anystr)
+   local t = luatype(anystr)
+   ZEN.assert(t=='string',"Argument to limit on-screen not a string")
+   if #anystr > 32 then
+	  return(string.sub(anystr,1,32).."..")
+   end
+   return(anystr)
+end
+
 -- debug functions
-local function debug_traceback()
-   I.print(ZEN_traceback)
+function debug_traceback()
+   for k,v in pairs(ZEN.traceback) do
+	  warn(v)
+   end
+end
+Given("backtrace", function() debug_traceback() end)
+When("backtrace", function() debug_traceback() end)
+Then("backtrace", function() debug_traceback() end)
+
+function debug_heap_dump()
+   I.warn({HEAP = ZEN.heap()})
 end
 
-local function debug_heap_dump()
-   I.print(HEAP)
-end
-
-local function debug_heap_schema()
+function debug_heap_schema()
+   I.schema({SCHEMA = ZEN.heap()})
    -- print only keys without values
 end
 
@@ -35,3 +51,7 @@ end
 Given("debug", function() ZEN.debug() end)
 When("debug",  function() ZEN.debug() end)
 Then("debug",  function() ZEN.debug() end)
+
+Given("schema", function() debug_heap_schema() end)
+When("schema",  function() debug_heap_schema() end)
+Then("schema",  function() debug_heap_schema() end)

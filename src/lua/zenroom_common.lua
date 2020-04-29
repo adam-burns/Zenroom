@@ -191,6 +191,22 @@ function map(data, fun)
    return(out)
 end
 
+-- deep recursive map on a tree structure
+-- for usage see test/deepmap.lua
+function deepmap(fun,t,...)
+   assert(luatype(fun) == 'function', "Internal error: deepmap 2nd argument is not a function")
+   assert(luatype(t) == 'table', "Internal error: deepmap 1st argument is not a table")
+   local res = {}
+   for k,v in pairs(t) do
+	  if luatype(v) == 'table' then
+		 res[k] = deepmap(fun, v) -- recursion
+	  else
+		 res[k] = fun(v,...)
+	  end
+   end
+   return setmetatable(res, getmetatable(t))
+end
+
 function isarray(obj)
    if not obj then error("isarray() called on a nil object",2) end
    if luatype(obj) ~= 'table' then error("isarray() argument is not a table",2) end
@@ -203,6 +219,17 @@ function isarray(obj)
    end
    return count
 end
+
+function array_contains(arr, obj)
+   assert(luatype(arr) == 'table', "Internal error: array_contains argument is not a table")
+   local res = false
+   for k, v in ipairs(obj) do
+	  assert(luatype(k) == 'number', "Internal error: array_contains argument is not an array")
+	  res = res or v == obj
+   end
+   return res
+end
+
 
 function help(module)
    if module == nil then
@@ -230,10 +257,12 @@ local function split(src,pat)
    src:gsub(pat, function(x) tbl[#tbl+1]=x end)
    return tbl
 end
-function strtok(src)
+function strtok(src, pat)
    if not src then return { } end
+   pat = pat or "%S+"
    ZEN.assert(luatype(src) == "string", "strtok error: argument is not a string")
-   return split(src, "%S+") end
+   return split(src, pat)
+end
 
 -- assert all values in table are converted to zenroom types
 -- used in zencode when transitioning out of given memory
